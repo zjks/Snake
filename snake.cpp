@@ -27,6 +27,8 @@ Snake g_snake;
 
 Position g_food;
 
+int g_score;
+
 void InitFood()
 {
 	srand((unsigned)time( NULL ));
@@ -85,7 +87,7 @@ void InitMap()
 			}
 			else if(i == MAP_HEIGHT)
 			{
-			   	printf("-");	
+			   	printf("_");	
 			}
 			else
 			{
@@ -93,6 +95,8 @@ void InitMap()
 			}
 		}
 	}
+	printf("w:上 a:左 s:下 d:右\n");
+	printf("made by:coco\n");
 }
 
 
@@ -108,7 +112,7 @@ void UpdateScreen()
 	DrawSnake();
 }
 
-void SnackMove(int key)
+void SnakeMove(int key)
 {
 	int delta_x =0;
 	int delta_y =0;
@@ -158,19 +162,91 @@ void EatFood()
 		g_snake.size++;
 		g_snake.pos[g_snake.size-1].x =g_food.x;
 		g_snake.pos[g_snake.size-1].y =g_food.y;
+		
+		InitFood();
+
+		g_score += 10;	
 	}
 }
 
+int HitWall()
+{
+	if(g_snake.pos[0].x <0 ||
+	   g_snake.pos[0].y <0 ||
+	   g_snake.pos[0].x >MAP_WIDTH ||
+	   g_snake.pos[0].y >MAP_HEIGHT)
+	{
+		return -1;
+	}
+
+	return 0;
+}
+
+int HitSelf()
+{
+	int i;
+	for(i =1;i<g_snake.size; i++)
+	{
+		if(g_snake.pos[0].x ==g_snake.pos[i].x &&
+	       g_snake.pos[0].y ==g_snake.pos[i].y)
+		{
+		   return -1;
+		}
+    }
+	return 0;
+}
+
+int IsBack(int key,int last_key)
+{
+	if(key == 'w' || key == 'W')
+	{
+		if(last_key == 's' || last_key == 'S')
+		{
+			return -1;
+		}
+	}
+	else if(key == 's' || key == 'S')
+	{
+		if(last_key == 'w' || last_key == 'W')
+		{
+			return -1;
+		}
+	}
+	else if(key == 'a' || key == 'A')
+	{
+		if(last_key == 'd' || last_key == 'D')
+		{
+			return -1;
+		}
+	}
+	else if(key == 'd' || key == 'D')
+	{
+		if(last_key == 'a' || last_key == 'A')
+		{
+			return -1;
+		}
+	}
+	return 0;	
+}
 
 void GameLoop()
 {
 	int key =0;
+	int last_key = 0;
 
 	while (1)
 	{
 		if(_kbhit())
 		{
 			key =_getch();
+
+			if(IsBack(key,last_key) < 0)
+			{
+				key = last_key;
+				continue;
+			}
+
+			last_key =key;
 		}
 		
 		if(key == 'q' || key == 'Q')
@@ -178,8 +254,19 @@ void GameLoop()
 			return;
 		}
 
-        SnackMove(key);
+        SnakeMove(key);
+        
+		if(HitWall() < 0)
+		{
+			return;
+		}
+		if(HitSelf() < 0)
+		{
+			return;
+		}
+
 		EatFood();
+
 		UpdateScreen();
 
 		Sleep(100);
@@ -189,6 +276,9 @@ void GameLoop()
 
 void Score()
 {
+	system("cls");
+	printf("Good Game\n");
+	printf("得分 %d\n",g_score);
 }
 
 
